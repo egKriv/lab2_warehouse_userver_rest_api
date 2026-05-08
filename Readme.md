@@ -27,31 +27,31 @@ make -j$(nproc)
 ```
 
 
-## Docker
+### Docker
 ```bash
 docker-compose up --build
 Сервис будет доступен на http://localhost:8082.
 ```
 
 
-### Тестирование
+## Тестирование
 ```bash
 cd tests
 ./run_tests.sh
 ```
 
 
-### Примеры запросов
+## Примеры запросов
 См. openapi.yaml для полной спецификации. Примеры ниже:
 
-# Регистрация
+### Регистрация
 ```bash
 curl -X POST http://localhost:8080/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{"login":"ivanov","password":"123456","first_name":"Иван","last_name":"Иванов","email":"ivan@example.com"}'
 ```
 
-# Вход
+### Вход
 ```bash
 curl -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
@@ -69,7 +69,7 @@ json
   "user": {"id":"user_...","login":"ivanov","role":"storekeeper"}
 }
 
-# Добавление товара (требуется токен)
+### Добавление товара (требуется токен)
 ```bash
 TOKEN="полученный_токен"
 curl -X POST http://localhost:8080/api/products \
@@ -78,7 +78,7 @@ curl -X POST http://localhost:8080/api/products \
   -d '{"name":"Гвозди 100мм","initial_quantity":1000,"sku":"GVD-100","unit":"кг"}'
 ```
 
-# Списание товара
+### Списание товара
 ```bash
 curl -X POST http://localhost:8080/api/inventory/write-off \
   -H "Authorization: Bearer $TOKEN" \
@@ -87,5 +87,5 @@ curl -X POST http://localhost:8080/api/inventory/write-off \
 ```
 
 
-# Примечание
+### Примечание
 Хранение данных in-memory. При перезапуске данные сбрасываются.
