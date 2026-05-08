@@ -1,6 +1,6 @@
 # Inventory Management API (Вариант 18)
 
-REST API для управления складом на базе Yandex Userver. Реализованы сущности: Пользователь, Товар, Поступление.
+REST API для управления складом на базе Yandex Userver.
 
 ## Функциональность
 - Регистрация и аутентификация (JWT-like токены)
@@ -18,29 +18,31 @@ REST API для управления складом на базе Yandex Userver
 ```bash
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
-make -j$(nproc)Запуск сервера
-bash
+make -j$(nproc)
+
+### Запуск сервера
+```bash
 ./inventory-api --config ../config/config.yaml
 
-Docker
-bash
+##Docker
+```bash
 docker-compose up --build
 Сервис будет доступен на http://localhost:8082.
 
-Тестирование
-bash
+###Тестирование
+```bash
 cd tests
 ./run_tests.sh
 Примеры запросов
 См. openapi.yaml для полной спецификации. Примеры ниже:
 
-Регистрация
-bash
+#Регистрация
+```bash
 curl -X POST http://localhost:8080/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{"login":"ivanov","password":"123456","first_name":"Иван","last_name":"Иванов","email":"ivan@example.com"}'
-Вход
-bash
+#Вход
+```bash
 curl -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"login":"ivanov","password":"123456"}'
@@ -53,45 +55,22 @@ json
   "expires_in": 3600,
   "user": {"id":"user_...","login":"ivanov","role":"storekeeper"}
 }
-Добавление товара (требуется токен)
-bash
+#Добавление товара (требуется токен)
+```bash
 TOKEN="полученный_токен"
 curl -X POST http://localhost:8080/api/products \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"name":"Гвозди 100мм","initial_quantity":1000,"sku":"GVD-100","unit":"кг"}'
-Списание товара
-bash
+#Списание товара
+```bash
 curl -X POST http://localhost:8080/api/inventory/write-off \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"product_id":"prod_...", "quantity":50}'
-Примечание
+#Примечание
 Хранение данных in-memory. При перезапуске данные сбрасываются.
 
-text
 
-### 27. `tests/run_tests.sh`
-```bash
-#!/bin/bash
-echo "========================================="
-echo "Running Inventory API Tests"
-echo "========================================="
-echo ""
-echo "Checking if service is running..."
-if curl -s http://localhost:8080/ping > /dev/null 2>&1; then
-    echo "Service is running. Starting tests..."
-    echo ""
-    ./test_api.sh
-    EXIT_CODE=$?
-    echo ""
-    if [ $EXIT_CODE -eq 0 ]; then
-        echo "All tests completed successfully!"
-    else
-        echo "Some tests failed."
-    fi
-    exit $EXIT_CODE
-else
-    echo "ERROR: Service is not running on http://localhost:8080"
-    exit 1
+
 fi
