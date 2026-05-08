@@ -1,0 +1,79 @@
+components_manager:
+  coro_pool:
+    initial_size: 1000
+    max_size: 5000
+  task_processors:
+    main-task-processor:
+      worker_threads: 4
+      thread_name: main-worker
+    fs-task-processor:
+      worker_threads: 1
+      thread_name: fs-worker
+    monitor-task-processor:
+      worker_threads: 1
+      thread_name: monitor
+  default_task_processor: main-task-processor
+  
+  components:
+    server:
+      listener:
+        port: 8080
+        task_processor: main-task-processor
+    
+    logging:
+      fs-task-processor: fs-task-processor
+      loggers:
+        default:
+          file_path: '@stderr'
+          format: tskv
+          level: debug
+    
+    handler-ping:
+      path: /ping
+      method: GET
+      task_processor: main-task-processor
+    
+    auth-handler:
+      path: /api/auth/login
+      method: POST
+      task_processor: main-task-processor
+    
+    register-handler:
+      path: /api/auth/register
+      method: POST
+      task_processor: main-task-processor
+    
+    user-search-handler:
+      path: /api/users/search
+      method: GET
+      task_processor: main-task-processor
+    
+    user-by-login-handler:
+      path: /api/users/by-login/{login}
+      method: GET
+      task_processor: main-task-processor
+    
+    product-handler:
+      path: /api/products
+      method: GET,POST
+      task_processor: main-task-processor
+    
+    product-search-handler:
+      path: /api/products/search
+      method: GET
+      task_processor: main-task-processor
+    
+    product-stock-handler:
+      path: /api/products/stock
+      method: GET
+      task_processor: main-task-processor
+    
+    receipt-handler:
+      path: /api/receipts
+      method: GET,POST
+      task_processor: main-task-processor
+    
+    write-off-handler:
+      path: /api/inventory/write-off
+      method: POST
+      task_processor: main-task-processor

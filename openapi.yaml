@@ -1,0 +1,225 @@
+openapi: 3.0.3
+info:
+  title: Inventory Management API
+  description: API для управления складом (вариант 18)
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/api
+    description: Development server
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id: { type: string }
+        login: { type: string }
+        first_name: { type: string }
+        last_name: { type: string }
+        email: { type: string, format: email }
+        role: { type: string }
+        created_at: { type: string, format: date-time }
+
+    RegisterRequest:
+      type: object
+      required: [login, password, first_name, last_name, email]
+      properties:
+        login: { type: string, minLength: 3, maxLength: 50 }
+        password: { type: string, minLength: 6 }
+        first_name: { type: string }
+        last_name: { type: string }
+        email: { type: string, format: email }
+        role: { type: string, default: storekeeper }
+
+    LoginRequest:
+      type: object
+      required: [login, password]
+      properties:
+        login: { type: string }
+        password: { type: string }
+
+    LoginResponse:
+      type: object
+      properties:
+        access_token: { type: string }
+        token_type: { type: string }
+        expires_in: { type: integer }
+        user: { $ref: '#/components/schemas/User' }
+
+    Product:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        sku: { type: string }
+        quantity_on_hand: { type: integer }
+        unit: { type: string }
+
+    ProductCreateRequest:
+      type: object
+      required: [name, initial_quantity]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        sku: { type: string }
+        initial_quantity: { type: integer, minimum: 0 }
+        unit: { type: string, default: pcs }
+
+    Receipt:
+      type: object
+      properties:
+        id: { type: string }
+        product_id: { type: string }
+        quantity: { type: integer }
+        supplier: { type: string }
+        receipt_date: { type: string, format: date-time }
+        created_by: { type: string }
+
+    ReceiptCreateRequest:
+      type: object
+      required: [product_id, quantity, supplier]
+      properties:
+        product_id: { type: string }
+        quantity: { type: integer, minimum: 1 }
+        supplier: { type: string }
+
+    WriteOffRequest:
+      type: object
+      required: [product_id, quantity]
+      properties:
+        product_id: { type: string }
+        quantity: { type: integer, minimum: 1 }
+
+    Error:
+      type: object
+      properties:
+        error: { type: string }
+
+paths:
+  /auth/register:
+    post:
+      summary: Register new user
+      tags: [Authentication]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/RegisterRequest' } } } }
+      responses:
+        '201': { description: User registered, content: { application/json: { schema: { $ref: '#/components/schemas/User' } } } }
+        '400': { description: Invalid input, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '409': { description: User already exists }
+
+  /auth/login:
+    post:
+      summary: Login
+      tags: [Authentication]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/LoginRequest' } } } }
+      responses:
+        '200': { description: Success, content: { application/json: { schema: { $ref: '#/components/schemas/LoginResponse' } } } }
+        '401': { description: Invalid credentials }
+
+  /users/search:
+    get:
+      summary: Search users by name mask
+      tags: [Users]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: name_mask
+          required: true
+          schema: { type: string }
+          description: Substring to match in "first_name last_name"
+      responses:
+        '200': { description: List of users, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/User' } } } } }
+        '400': { description: Missing name_mask }
+        '401': { description: Unauthorized }
+
+  /users/by-login/{login}:
+    get:
+      summary: Get user by login
+      tags: [Users]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: login
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: User found, content: { application/json: { schema: { $ref: '#/components/schemas/User' } } } }
+        '401': { description: Unauthorized }
+        '404': { description: Not found }
+
+  /products:
+    get:
+      summary: Get all products (stock list)
+      tags: [Products]
+      responses:
+        '200': { description: Array of products, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Product' } } } } }
+    post:
+      summary: Add new product
+      tags: [Products]
+      security: [{ bearerAuth: [] }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ProductCreateRequest' } } } }
+      responses:
+        '201': { description: Product created, content: { application/json: { schema: { $ref: '#/components/schemas/Product' } } } }
+        '400': { description: Invalid input }
+        '401': { description: Unauthorized }
+
+  /products/search:
+    get:
+      summary: Search product by name
+      tags: [Products]
+      parameters:
+        - in: query
+          name: name
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Matching products, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Product' } } } } }
+        '400': { description: Missing name parameter }
+
+  /products/stock:
+    get:
+      summary: Get current stock levels
+      tags: [Products]
+      responses:
+        '200': { description: Stock list (simplified: id, name, quantity_on_hand, unit) }
+
+  /receipts:
+    get:
+      summary: Get receipt history
+      tags: [Receipts]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: product_id
+          schema: { type: string }
+          description: Filter by product ID
+      responses:
+        '200': { description: List of receipts, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Receipt' } } } } }
+        '401': { description: Unauthorized }
+    post:
+      summary: Create new receipt (goods in)
+      tags: [Receipts]
+      security: [{ bearerAuth: [] }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ReceiptCreateRequest' } } } }
+      responses:
+        '201': { description: Receipt created, content: { application/json: { schema: { $ref: '#/components/schemas/Receipt' } } } }
+        '400': { description: Invalid input }
+        '401': { description: Unauthorized }
+
+  /inventory/write-off:
+    post:
+      summary: Write-off goods from warehouse
+      tags: [Inventory]
+      security: [{ bearerAuth: [] }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/WriteOffRequest' } } } }
+      responses:
+        '200': { description: Write-off successful, content: { application/json: { schema: { type: object, properties: { message: { type: string }, product_id: { type: string }, remaining_quantity: { type: integer } } } } } }
+        '400': { description: Invalid input }
+        '401': { description: Unauthorized }
+        '409': { description: Insufficient stock or product not found }
