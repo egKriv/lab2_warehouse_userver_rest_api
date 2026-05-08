@@ -19,21 +19,29 @@ REST API для управления складом на базе Yandex Userver
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make -j$(nproc)
+```
 
 ### Запуск сервера
 ```bash
 ./inventory-api --config ../config/config.yaml
+```
+
 
 ##Docker
 ```bash
 docker-compose up --build
 Сервис будет доступен на http://localhost:8082.
+```
+
 
 ###Тестирование
 ```bash
 cd tests
 ./run_tests.sh
-Примеры запросов
+```
+
+
+###Примеры запросов
 См. openapi.yaml для полной спецификации. Примеры ниже:
 
 #Регистрация
@@ -41,11 +49,16 @@ cd tests
 curl -X POST http://localhost:8080/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{"login":"ivanov","password":"123456","first_name":"Иван","last_name":"Иванов","email":"ivan@example.com"}'
+```
+
 #Вход
 ```bash
 curl -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"login":"ivanov","password":"123456"}'
+```
+
+
 Ответ:
 
 json
@@ -62,12 +75,18 @@ curl -X POST http://localhost:8080/api/products \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"name":"Гвозди 100мм","initial_quantity":1000,"sku":"GVD-100","unit":"кг"}'
+```
+
+
 #Списание товара
 ```bash
 curl -X POST http://localhost:8080/api/inventory/write-off \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"product_id":"prod_...", "quantity":50}'
+```
+
+
 #Примечание
 Хранение данных in-memory. При перезапуске данные сбрасываются.
 
